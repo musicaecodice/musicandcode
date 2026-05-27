@@ -1,0 +1,183 @@
+\documentclass[a4paper,11pt]{book}
+
+%\usepackage[breakable]{tcolorbox}
+\usepackage{iftex}
+\tracinglostchars=2
+\ifTUTeX\usepackage{fontspec}
+\else
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc} % The default since 2018
+  \DeclareUnicodeCharacter{200B}{{\hskip 0pt}}
+\fi
+
+\usepackage{parskip} 
+   \providecommand{\tightlist}{\setlength{\itemsep}{0pt}
+                               \setlength{\parskip}{0pt}}                              
+\usepackage{geometry} % Used to adjust the document margins
+    \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage{amsmath} % Equations
+\usepackage{amssymb} % Equations
+\usepackage{titling} % Toglie spazi esagerati ai titoli
+\usepackage{graphicx}  % Per immagini
+\usepackage[Export]{adjustbox} % Constrain images to a maximum size
+    \adjustboxset{max size={0.9\linewidth}{0.9\paperheight}}
+\usepackage{float}
+    \floatplacement{figure}{H}
+\usepackage{xcolor}
+  \definecolor{mygreen}{rgb}{0,0.6,0}
+  \definecolor{mygray}{rgb}{0.95,0.95,0.95}
+  \definecolor{mymauve}{rgb}{0.58,0,0.82}  
+  \definecolor{urlcolor}{rgb}{0,.145,.698}
+  \definecolor{linkcolor}{rgb}{0,.145,.698} % .71,0.21,0.01
+  \definecolor{citecolor}{rgb}{0,.145,.698} % .12,.54,.11
+\usepackage{hyperref}
+    \hypersetup{
+      breaklinks=true,  % so long urls are correctly broken across lines
+      colorlinks=true,
+      urlcolor=urlcolor,
+      linkcolor=urlcolor,
+      citecolor=urlcolor,
+      }  
+      
+\usepackage{listings} % per il codice
+
+\lstset{ 
+  backgroundcolor=\color{mygray},        
+  breakatwhitespace=false,        
+  breaklines=true,               
+  captionpos=b,                   
+  commentstyle=\color{mygreen},   
+  escapeinside={\%*}{*},        
+  extendedchars=true,            
+  firstnumber=1,               
+  frame=single,	
+  language=java,
+  keepspaces=true,                
+  basicstyle=\footnotesize\ttfamily,       
+  numbers=left,                  
+  numbersep=5pt,                 
+  numberstyle=\tiny\color{black}, 
+  rulecolor=\color{black},                        
+  stepnumber=1,                        
+  tabsize=2	                      
+        }
+
+\setcounter{tocdepth}{3} % Include subsub section in indice
+\usepackage[toc,page]{appendix}  
+% ===============================================================
+\graphicspath{
+              {../img/1_img/},
+              {../img/2_img/},
+              {../img/3_img/},
+              {../img/4_img/}
+              {../img/5_img/}
+              {../img/6_img/}
+              {../img/7_img/}
+         %     {../img/8_img/}
+         %     {../img/9_img/}
+         %     {../img/10_img/}
+              {../img/11_img/}
+              {../img/12_img/}
+              }
+
+\begin{document}
+
+\author{Andrea Vigani}
+\title{Music and code}
+\maketitle
+
+%\begin{abstract}
+%In this Chapter bla bla bla.
+%\end{abstract}
+
+\chapter*{Preface}\label{prefazione}
+
+This writing is not: 
+\begin{itemize}
+\tightlist\item intended to be a book or a manual.
+\item exhaustive.
+\item written in a descriptive/discursive style.
+\item aimed to provide absolute truths or certainties.
+\end{itemize}
+
+It aims to:
+\begin{itemize}
+\tightlist\item provide readers with different aspects of electroacoustic music from different perspectives.
+\item prompt readers to think individually or collectively about specific topics.
+\item provide readers with input that will encourage them to delve deeper into the topics they find most interesting among those presented.
+\item help readers build their own poetic consciousness and learn the most suitable informatic tools to achieve it.
+\item help readers to find their own compositional models and procedures.
+\end{itemize}
+
+With the same purposes I use it as a framework in my University and Conservatory lessons.
+
+It is always \textit{under construction}.
+
+Check first page to see the last date version.
+
+\tableofcontents
+
+\input{../chapters/1_premises.tex}
+\input{../chapters/2_instruments.tex}
+%\input{../chapters/3_fixed.tex}
+%\input{../chapters/4_cmusic.tex}
+%\input{../chapters/5_cac.tex}
+%\input{../chapters/6_lvset.tex}
+%\input{../chapters/7_hyper.tex}
+%\input{../chapters/8_lvcod.tex}
+%\input{../chapters/8_lvcod.tex}
+%\input{../chapters/8_lvcod.tex}
+\begin{appendices}
+%\input{../chapters/11_A1.tex}
+%\input{../chapters/12_A2.tex}
+\end{appendices}
+
+\lstlistoflistings\begin{thebibliography}{0}
+        % Le tue voci di bibliografia andranno qui
+\bibitem{allazione} \url{https://www.youtube.com/shorts/jq7CD9XM-ow}
+\bibitem{tibet} \url{https://youtu.be/8-wLLhyVlLk?si=Pw-01ZnjlLhWVgpK} 
+\bibitem{malher_x} \url{https://www.youtube.com/watch?v=QVoviGYThxw}      
+\bibitem{schubert_trio} \url{https://www.youtube.com/watch?v=e52IMaE-3As}
+\bibitem{chop_1} \url{https://www.youtube.com/watch?v=QpEit_Lll0k}
+\bibitem{chop_2} \url{https://www.youtube.com/watch?v=_LCy21ddnsM}
+\bibitem{chop_3} \url{https://youtu.be/NZUCq5GfsQ4?si=Vd2MxGYYxkB2p8Oz}
+\bibitem{gass_1} \url{https://www.youtube.com/watch?v=lwFGVv9h80o}
+\bibitem{gass_2} \url{https://www.youtube.com/watch?v=qENwEuD__2E}
+\bibitem{tchai} \url{https://www.youtube.com/watch?v=a_B02BZp-5Y&t=923s}
+\bibitem{veloso} \url{https://youtu.be/wmTHiCq8T3I?si=tC57HEpMAcVUalMD}
+\bibitem{band} \url{https://youtu.be/PZpH9Khn0E0?si=B8aluq7HSpKjbwHe&t=77}
+\bibitem{forest} \url{https://www.youtube.com/watch?v=29XymHesxa0}
+\bibitem{bbb} \url{hhttps://youtu.be/iWoI8vmE8bI?si=JXVcAo1Ok-94U0BF}
+\bibitem{joice} \url{https://www.youtube.com/watch?v=-uIvzVgk16c&t=3s}
+\bibitem{treno} \url{https://www.youtube.com/watch?v=x0U605Wqen4}
+\bibitem{capo} \url{https://www.youtube.com/watch?v=K2h88z_u_UQ}
+\bibitem{scar} \url{https://youtu.be/JQGCecX2d_Q?si=9YsT7CghkmdF-6bU}
+\bibitem{miles} \url{https://youtu.be/TLDflhhdPCg?si=MWjDfFMNpnAjUnBz}
+\bibitem{ram} \url{https://youtu.be/KQiBIb_klT8?si=AN7eCU0i_bQvdPii}
+\bibitem{gamelan} \url{https://youtu.be/UEWCCSuHsuQ?si=KJuMp6i48CeySpBD}
+\bibitem{morri} \url{https://www.youtube.com/watch?v=Ie0wanLy5MI&t=3s}
+\bibitem{sordi} \url{https://youtu.be/i1X3mz-k0oE?si=KL1os8wzWwQCjrIR}
+\bibitem{goldberg} \url{https://youtu.be/MHFuaaGpGKQ?si=F0LcXKWqlv3wL4hO}
+\bibitem{muez} \url{https://www.youtube.com/watch?v=G96FEkkFCzg}
+\bibitem{quinta} \url{https://www.youtube.com/watch?v=7eOaIiHB58U}
+\bibitem{monty} \url{https://www.youtube.com/watch?v=asOFi1W228M}
+
+% Ch 2
+
+\bibitem{treni} \url{https://youtu.be/N9pOq8u6-bA?si=4ALUHn8MCJ0kuMll}
+\bibitem{natura} \url{https://www.youtube.com/watch?v=c_JHjUFfOs8&t=12s}
+\bibitem{vaggione} \url{https://www.youtube.com/watch?v=F20kvxuXuE0}
+\bibitem{satie} \url{https://www.youtube.com/watch?v=QwvOxJ-4Saw}
+\bibitem{eno} \url{https://www.youtube.com/watch?v=vNwYtllyt3Q}
+\bibitem{barretn} \url{https://www.youtube.com/watch?v=xf1JjUtnHs8}
+\bibitem{wells} \url{https://www.youtube.com/watch?v=Xs0K4ApWl4g}
+\bibitem{stria} \url{https://www.youtube.com/watch?v=988jPjs1gao}
+\bibitem{dance} \url{https://www.youtube.com/watch?v=VstAnd5GA6w&t=2276s}
+\bibitem{otto} \url{https://youtu.be/oMgQJEcVToY?si=glmYv4q5Pb0oTWe7}
+\bibitem{slork} \url{https://youtu.be/chA-4GRCb-I?si=VZUQ835EY9Tutgxk}
+\bibitem{anthemes} \url{https://www.youtube.com/watch?v=TMYDgwNALY8}
+\bibitem{livecoding} \url{https://www.youtube.com/watch?v=Ix2b_qFYfAA&t=163s}
+\bibitem{futuriste} \url{https://youtu.be/CIPTgie3Wjc?si=T6FxI8Lj6ynsKx7I}
+\bibitem{melody} \url{https://www.youtube.com/watch?v=8ftsFsScFbM}
+\end{thebibliography}
+\end{document}

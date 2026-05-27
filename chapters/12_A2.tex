@@ -1,0 +1,1002 @@
+\chapter{Components, connections and parameters}\label{components-connections-and-parameters}
+
+In this appendix we will delve deeper into the components, connections and parameters used in section \textit{The virtual instrument paradigm} [\ref{the-virtual-instrument-paradigm}] in designing a generic virtual instrument model.
+
+\section{Source}\label{source}
+
+Audio rate signal in range +/- 1.
+
+Two types:
+\begin{itemize}
+\tightlist
+\item oscillators.
+\item input signals.
+\end{itemize}
+
+\subsection{Oscillators}\label{oscillators}
+Generate audio signals by reading sample values (lookup) ​​from wavetables or buffers.
+
+\subsubsection{Lookup}\label{lookup}
+
+Buffers and Arrays are indexed collections and do not have a time dimension.
+
+Sound waves are small changes in atmospheric pressure over time.
+
+To dynamically reproduce these variations we can obtain the individual $y$ values ​​stored in a Buffer (instantaneous amplitudes that correspond to the measurement of the atmospheric pressure at that moment) by recalling the underlying indices ($x$ values).
+
+To create a playback we can use a phasor (or counter) that generates values ​​at a sampling rate frequency ranging from 0 to the size - 1 of the Buffer to be read.
+
+These values ​​are the indexes used to recall the values ​​of the stored samples.
+
+Graphic representation.
+
+\begin{lstlisting}[frame=single] 
+a = (0..30);
+b = Signal.sineFill(30,[0.4,0.6,0.2]);
+[a,b].plot(discrete:true);
+\end{lstlisting}
+
+\begin{center}
+\includegraphics[scale=0.7]{lookup.png}
+\end{center}
+
+Audio representation.
+
+\begin{lstlisting}[frame=single] 
+s.boot;
+s.scope;
+
+b.free;
+b = Buffer.read(s, ExampleFiles.apollo11); 
+
+SynthDef(\lookup, {arg buf=0,amp=0;
+                   var pha, sig;
+                       pha = Phasor.ar(0,MouseX.kr(0,10),0,BufFrames.kr(buf));
+                       pha.linlin(0,BufFrames.kr(buf),0,1).scope;
+                       sig = BufRd.ar(1,buf,pha);
+                       sig = sig * amp;
+                   Out.ar(0, sig)
+                   }).add;
+
+a = Synth(\lookup, [\buf,b, \amp, 0.2]);
+a.free;
+\end{lstlisting}
+
+Table lookup is a fundamental process in music computing. 
+
+It underpins numerous procedures ranging from sequencing (client side) to various sound synthesis and processing techniques.
+
+This process is used by all three main types of oscillators:
+
+\begin{itemize}
+\tightlist
+\item interpolating wavetable oscillator.
+\item sample playback oscillator.  
+\item buffer reading oscillator. 
+\end{itemize}
+
+\subsubsection{Interpolating wavetable oscillator}\label{interpolating-wavetable-oscillator}
+Read wavetables that contain a single cycle of a waveform in a cyclic way.
+
+\begin{lstlisting}[frame=single] 
+b.free;
+b = Buffer.alloc(s, 512, 1);
+b.sine1(1.0/[1,2,3,4,5,6], true, true, true);
+b.plot;
+
+SynthDef(\woscil, {arg buf=0, amp=0;
+                   var sig;
+                       sig = Osc.ar(buf, MouseX.kr(200,800));
+                       sig = sig * amp;
+                   Out.ar(0, sig)
+                   }).add;
+
+a = Synth(\woscil, [\buf,b, \amp, 0.2]);
+a.free;
+\end{lstlisting}
+
+Main parameters are:
+
+\begin{itemize}
+\tightlist
+\item buffer to read.
+\item frequency (or pitch).
+
+Frequency can only be recognized for periodic waves.
+
+A periodic wave is a vibrational phenomenon that repeats itself identically at equal intervals of time.
+
+The single interval measured in time is called the period (or cycle) of the wave and represented by the letter T.
+
+We can graphically represent a wave through a cartesian reference system:
+\begin{itemize}
+\tightlist
+\item x-axis (x) \(\rightarrow\) time.
+\item y-axis (y) \(\rightarrow\)  atmospheric pressure variations.
+\end{itemize}
+\begin{center}
+\includegraphics[scale=1]{oscilla.png}
+\end{center}
+
+
+In science the frequency of a periodic sound is measured in Hertz or cps (cycles per second) which is how many times the period repeats itself in one second.
+
+The human ear in its optimal condition perceives sounds between 20 and 20,000 Hz.
+
+We can specify this parameter in three different types of symbolic notation:
+\begin{enumerate}
+\tightlist
+\item Musical symbols \(\rightarrow\) determine pitch based on graphic position in a coded language context (musical notation).
+\begin{center}
+\includegraphics[scale=0.9]{simboli.png}
+\end{center}
+\item Alphabetic symbols \(\rightarrow\) determine pitch as the names of a scale or mode.
+\begin{center}
+\includegraphics[scale=0.9]{nomi.png}
+\end{center}
+\item Numeric symbols \(\rightarrow\) in this case, as far as the contents of this paper are concerned, we can make a further subdivision into two different units:
+    \begin{itemize}
+    \tightlist
+    \item MIDI notes \(\rightarrow\) determine the pitch as numerical values (​​60 = Middle C).
+    \begin{center}
+    \includegraphics[scale=0.9]{midi.png}
+    \end{center}
+    \item frequencies (Hertz) \(\rightarrow\) determine pitch as numerical values ​​representing the number of cycles per second of a periodic wave (A4 = 440 Hz - diapason).
+    \begin{center}
+    \includegraphics[scale=0.9]{frequenze.png}
+    \end{center}
+    \end{itemize}
+\end{enumerate}
+
+Useful conversions
+
+\begin{lstlisting}[frame=single] 
+440.cpsmidi; // Hz --> midi
+440.cpsname; 
+60.midicps;  // midi --> Hz
+60.midiname;
+\end{lstlisting}
+
+\item phase \(\rightarrow\) point in the period where the oscillation begins.
+
+\begin{lstlisting}[frame=single] 
+{[SinOsc.ar(3,-1),
+  SinOsc.ar(3, 0),
+  SinOsc.ar(3, 0.5),
+  SinOsc.ar(3, 1),
+]}.plot(1);
+\end{lstlisting}
+
+\begin{center}
+\includegraphics[scale=0.7]{phase.png}
+\end{center}
+\end{itemize}
+
+\subsubsection{Sample playback oscillator}\label{sample-playback-oscillator}
+Read buffers that:
+\begin{itemize}
+\tightlist 
+\item contain a loaded soundfile.
+\item are continuously written by a recorder UGen.
+\end{itemize}
+
+\begin{lstlisting}[frame=single] 
+b.free;
+b = Buffer.read(s, ExampleFiles.apollo11); 
+b.plot;
+
+SynthDef(\plbk, {arg buf=0, start=0, rate=1, amp=0;
+	               var sig;
+	                   sig = PlayBuf.ar(1, buf,
+	                                       rate,
+	                                       startPos: start, // samples
+	                                       doneAction:2);
+	                   sig = sig * amp;
+	               Out.ar(0, sig)
+	               }).add;
+
+a = Synth(\plbk, [\buf,b, \rate, 1, \start, 50000, \amp, 0.2]);
+\end{lstlisting}
+
+Main parameters are:
+
+\begin{itemize}
+\tightlist
+\item buffer to read.
+\item rate (phasor incremental step value).
+
+      Affects pitch and duration.
+      \begin{itemize}
+      \tightlist
+      \item 1.0 \(\rightarrow\) normal speed, 1/1 duration, actual pitch, 
+      \item 2.0 \(\rightarrow\) double speed, 1/2 duration, 1 octave up,
+      \item 0.5 \(\rightarrow\) half speed, 2/1 duration, 1 octave low,
+      \item ...
+      \end{itemize} 
+      Negative values \(\rightarrow\) retrograde direction.
+\item start position \(\rightarrow\) (sample index).
+\end{itemize}
+      
+
+\subsubsection{Buffer reading oscillator}\label{buffer-reading-oscillator}
+Read buffers that:
+\begin{itemize}
+\tightlist 
+\item contain a loaded soundfile.
+\item are continuously written by a recorder UGen.
+\end{itemize}
+
+It differs from the previous one in that we use a continuous audio rate control signal (pointer) of any type instead of the phasor.
+
+\begin{lstlisting}[frame=single] 
+b.free;
+b = Buffer.read(s, ExampleFiles.apollo11); 
+b.plot;
+
+SynthDef(\bread, {arg buf=0, amp=0, smth=0.2;
+                  var sig;
+                      sig = BufRd.ar(1, buf,
+                                     K2A.ar(MouseX.kr(0, BufFrames.kr(buf),
+                                                      0, smth)));
+                      sig = sig * amp;
+                  Out.ar(0, sig)
+                  }).add;
+
+a = Synth(\bread, [\buf,b, \amp, 0.2]);
+a.set(\smth, 1);
+a.free;
+\end{lstlisting}
+
+Main parameters are:
+
+\begin{itemize}
+\tightlist
+\item buffer to read.
+\item control signal (pointer) parameters.
+\item smoothing time.
+\end{itemize}
+
+\subsection{Input signals}\label{input-signals}
+
+Typically, a computer has:
+
+\begin{itemize}
+\tightlist
+\item one input channel (microphone).
+\item two output channels (left and right speakers).
+\end{itemize} 
+
+Softwares have audio buses that we can connect to these channels as we wish through audio buses.
+
+One audio bus \(\rightarrow\) one input or output mono channel.
+
+In SuperColliders we have 128 audio channels (from 0 to 127) called buses.
+
+By default the first three \(\rightarrow\) \textit{public buses} used for input and output signals from the outside.
+
+The others \(\rightarrow\) \textit{private buses} availables for any internal software routing.
+
+Two UGens for incoming channels:
+\begin{itemize}
+\tightlist
+\item signals from public audio buses such as microphones or line inputs (ADC).
+\begin{lstlisting}[frame=single] 
+SynthDef(\mic, {arg busIn=0, amp=0;
+                var sig;
+                    sig = SoundIn.ar(busIn) * SinOsc.ar(400);
+                    sig = FreeVerb.ar(sig);
+                    sig = sig * amp;
+                Out.ar(0, sig)
+                }).add;
+
+a = Synth(\mic, [\busIn,0, \amp, 0.5]);
+a.free;
+\end{lstlisting}
+
+\item signals from private audio buses (internal routing).
+\begin{lstlisting}[frame=single] 
+~bus = Bus.audio;
+
+SynthDef(\source, {arg busOut=0;
+                   var sig;
+                       sig = Dust.ar(10);
+                       sig = Decay.ar(sig);
+                       sig = Resonz.ar(sig, 2000,1);
+                   Out.ar(busOut, sig)
+                   }).add;
+SynthDef(\rev, {arg busIn=0, amp=0;
+                var sig;
+                    sig = In.ar(busIn);
+                    sig = FreeVerb.ar(sig, 0.7, 0.8, 0.6);
+                    sig = sig * amp;
+                Out.ar(0, sig)
+                }).add;
+
+a = Synth(\rev,    [\busIn, ~bus, \amp, 1]);
+b = Synth(\source, [\busOut, ~bus]);
+b.set(\busOut, 0);
+b.set(\busOut, ~bus);
+
+a.free; b.free;
+\end{lstlisting}
+\end{itemize}
+
+For both main parameters are:
+
+\begin{itemize}
+\tightlist
+\item bus number.
+\item gain (amplitude)
+\end{itemize}
+
+
+\section{Ampltude envelope}\label{amplitude-envelope}
+
+Float number or control/audio rate signal in range 0-1.
+
+Two ways to measure the amplitude of a signal.
+\begin{itemize}
+\tightlist
+\item peak amplitude \(\rightarrow\) the highest absolute energy value among the instantaneous amplitudes (sample values from -1 to 1) within a finite time. 
+
+Values ​​between 0.0 and 1.0. 
+
+If the highest value is negative, we remove the minus sign.
+\item root mean square (RMS) \(\rightarrow\) a particular average of the energy values ​​of the instantaneous amplitudes within a finite time. 
+
+Values ​​between 0.0 and 1.0.  
+      \begin{itemize}
+      \tightlist
+      \item finite set of instantaneous amplitudes.
+\begin{lstlisting}[frame=single] 
+a = [0.0, 1.5, 1.0, 0.4, 0.6, 0.0, -0.4, -0.2, -1.0, -1.5, 0.0];
+\end{lstlisting}
+      \item squared.
+\begin{lstlisting}[frame=single] 
+a = a.pow(2);
+\end{lstlisting}
+      \item mathematical mean.
+\begin{lstlisting}[frame=single] 
+a = a.mean;
+\end{lstlisting}
+      \item square root.
+\begin{lstlisting}[frame=single] 
+a = a.sqrt;
+\end{lstlisting}
+      \end{itemize}
+\end{itemize}
+
+\begin{center}
+\includegraphics[scale=0.8]{amp_1.png}
+\end{center}
+
+\begin{itemize}
+\tightlist
+\item red points \(\rightarrow\) instantaneous amplitudes (sample values).
+\item red line \(\rightarrow\) peak amplitude.
+\item green line \(\rightarrow\) rms amplitude.
+\end{itemize}
+
+The main difference between peak and RMS amplitude is that the former is independent of the type of amplitude envelope of the signal while the latter, being an average, is strictly linked to it.
+
+\begin{center}
+\includegraphics[scale=1]{amp_2.png}
+\end{center}
+
+\begin{center}
+\includegraphics[scale=1]{amp_3.png}
+\end{center}
+
+\subsection{Representations and units of measurement}\label{representations-and-units-of-measurement}
+
+This parameter is also commonly called volume or amplification factor and in music we can represent it in two ways.
+
+\begin{enumerate}
+\tightlist
+\item musical symbols \(\rightarrow\) values ​​are relative to the musical context. 
+
+For example, a \textit{forte} in a baroque violin sonata does not have the same intensity as a \textit{forte} given to the brass instruments in a symphonic poem by R. Strauss. 
+
+Unlike pitches, where there is a precise correspondence between the symbolic representation in musical notation and the physical measurement, musical dynamics are characterized by a significant subjectivity that goes far beyond the simple physical measurement of the amplitudes of sounds.
+
+\begin{center}
+\includegraphics[scale=0.9]{dinamiche.png}
+\end{center}
+\item numerical values ​​relating to different units of measurement \(\rightarrow\) all refer to the peak amplitude.
+      \begin{itemize}
+      \tightlist
+      \item linear \(\rightarrow\)  an absolute unit of measurement, the furthest from human perception. 
+
+      A sound with an amplitude of 0.5 will always be half the \textit{loudest possible} sound and will always have the same intensity regardless of the musical context.
+      \item key velocity (MIDI) \(\rightarrow\) an absolute unit of measurement expressed as integer values ​​between 0 and 127. 
+      
+      The least accurate due to the limited number of levels available. 
+      
+      A sound with a key velocity of 127 will always be \textit{as loud as possible} and will always have the same intensity regardless of the musical context.
+      \item quartic \(\rightarrow\) absolute unit of measurement, closest to human perception. 
+       
+      To calculate the correct values we must raise the linear amplitude to the fourth power. 
+$$A^4$$      
+      Since they range from 0.0 to 1.0, the range remains the same.
+      \item decibels (dB) \(\rightarrow\) a relative unit of measurement expressed in decimal values ​​between 0.0 and \textit{-inf}. 
+      
+      It measures the difference in intensity between the amplitude of a sound compared to a reference amplitude. 
+      
+      A sound with an amplitude of -6.02 dB will always be half as loud as a sound whose amplitude was used as the reference for measurement. 
+      
+      To calculate the correct values, we must use the following formula where:
+      \begin{itemize}
+      \tightlist
+      \item $A$ \(\rightarrow\) linear amplitude value of the sound we want to measure.
+      \item $A_0$ \(\rightarrow\) amplitude of the reference sound (1.0).
+      \end{itemize} 
+$$A_{\text{dB}} = 20 \log_{10} \left( \frac{A}{A_0} \right)$$
+\end{itemize}
+Conversions.
+
+\begin{lstlisting}[frame=single] 
+a = 0.5;
+v = a * 127;     // lin --> velocity
+a = v  / 127;    // velocity --> lin
+q = a**4;        // lin --> quartic
+a = pow(q, 1/4); // quartic --> lin 
+d = a.ampdb;     // lin --> db
+a = d.dbamp;     // db --> lin
+\end{lstlisting}
+\begin{center}
+\includegraphics[scale=0.7]{curve.png}
+\end{center}
+\end{enumerate}
+
+
+\subsection{Scaling}\label{scaling}
+
+We can rescale output signal from UGens by multiplying the sample values ​​(+/-1.0) by a constant value between 0.0 and 1.0.
+
+\begin{lstlisting}[frame=single] 
+{[SinOsc.ar, SinOsc.ar * 0.2]}.plot
+\end{lstlisting}
+
+\begin{center}
+\includegraphics[scale=0.7]{scale.png}
+\end{center}
+
+\subsection{Interpolations and ramps}\label{interpolations-and-ramps}
+
+\textbf{Interpolation} \(\rightarrow\) go from \textit{a} to \textit{b} in \textit{n steps}.
+
+\begin{lstlisting}[frame=single] 
+a = 0.1; // start
+b = 1.0; // end
+n = 10;  // steps
+
+i = Array.interpolation(n, a, b); 
+i.postln;
+i.plot.plotMode_(\points);
+\end{lstlisting}
+\begin{center}
+\includegraphics[scale=0.7]{interp_1.png}
+\end{center}
+
+In the previous sentence we can replace \textit{a} with the last \textit{value reached} (state) \(\rightarrow\) from the \textit{value reached} go to \textit{b} in \textit{n steps}.
+
+\begin{lstlisting}[frame=single] 
+a = 0.1;       // last value init
+(
+b = rand(50);  // end
+n = 6;         // steps
+
+i = Array.interpolation(n, a, b); 
+i.postln;
+i.plot(minval:0,maxval:50).plotMode_(\points);
+a = b;         // replace last value
+)
+\end{lstlisting}
+
+In both the increase in value at each step is constant \(\rightarrow\) linear interpolations.
+
+\textbf{Ramp} \(\rightarrow\) go from \textit{a} to \textit{b} in this \textit{time} (seconds or milliseconds).
+
+Number of $x$ steps \(\rightarrow\) number of samples for the specified time at the sampling rate used.
+
+Example: go from 0.0 to 1.0 in 1 second.
+
+If sampling rate is 44.100 Hz the steps are 44.100 and the incremental time 1/44.100. 
+
+If it is 48.000 Hz the steps are 48.000 and the incremental value lower (1/48.000).
+
+The ramp still go from 0.0 to 1.0 in one second.
+
+It simply have more or less definition in amplitude changes.
+
+Linear \(\rightarrow\) constant incremental value.
+
+Curved \(\rightarrow\) incremental value change over time (steps).
+
+\begin{center}
+\includegraphics[scale=0.6]{ramp_1.png}
+\end{center}
+
+In curved interpolations (or ramps):
+\begin{itemize}
+\tightlist
+\item values between 0.0 and 1.0  \(\rightarrow\) the curve changes but not the start and end values. 
+\item other values \(\rightarrow\) start and/or end ​​are rescaled according to the exp or log base.
+\item exponential curve \(\rightarrow\) positive values.
+\item logarithmic curve \(\rightarrow\) negative values.
+\end{itemize}
+
+\subsection{BPF and control signals}\label{bpf-and-control-signals}
+
+In the previous paragraph, we looked at single-segment ramps.
+
+Amplitude envelopes are multi-segment ramps. 
+
+We can define the different points on a Cartesian plane by specifying their coordinates ($xy$) where the \textit{x} correspond to time and the \textit{y} correspond to levels.
+
+This type of description and visualization is called BPM (Break Point Function) and almost all music software has a graphical interface that allows us to set and visualize all the multi-ramp segments we want.
+
+\begin{center}
+\includegraphics[scale=0.6]{bpf_1.png}
+\end{center}
+
+In SuperCollider the \textit{Env} class.
+
+\subsubsection{Env and EnvGen class}\label{env-and-envgen-class}
+
+\textit{Env} class allows us to define any type of envelope we want in the form of a BPF.
+
+The \textit{.new} method (which remember can be omitted) creates a new envelope (instance).
+
+Its first two arguments are:
+
+\begin{itemize}
+\tightlist
+\item levels \(\rightarrow\) y values ​​(red in the figure) from 0.0 to 1.0 in the form of an array.
+\item delta times \(\rightarrow\) x values ​​(blue in the figure) in seconds in the form of an array with one fewer element than the levels.
+\end{itemize}
+
+\begin{center}
+\includegraphics[scale=0.6]{bpf_2.png}
+\end{center}
+
+The \textit{.test} method \(\rightarrow\) auditory monitor.
+
+The \textit{.plot} method \(\rightarrow\) visual monitor.
+
+\begin{lstlisting}[frame=single] 
+s.boot;                 
+
+Env.new([0, 0.7, 0.1, 0], // levels
+        [ 0.1, 0.2,  1 ]  // delta times
+       ).test.plot(minval: 0, maxval: 1);       
+\end{lstlisting}
+
+We can also specify a third argument that specifies the curve in two ways.
+
+\begin{itemize}
+\tightlist
+\item using a symbol.
+\begin{lstlisting}[frame=single] 
+[Env([0,0.5,0.1,0],          [0.1,0.2,1], \step),      
+ Env([0,0.5,0.1,0],          [0.1,0.2,1], \lin),       
+ Env([0.0001,0.5,0.1,0.0001],[0.1,0.2,1], \exp),       
+ Env([0,0.5,0.1,0],          [0.1,0.2,1], \sin),       
+ Env([0,0.5,0.1,0],          [0.1,0.2,1], \wel),       
+ Env([0,0.5,0.1,0],          [0.1,0.2,1], \sqr),        
+ Env([0,0.5,0.1,0],          [0.1,0.2,1], \cub)].plot;       
+\end{lstlisting}
+
+\begin{center}
+\includegraphics[scale=1.0]{curve_1.png}
+\end{center}
+
+\item through the curvature value.
+\begin{lstlisting}[frame=single] 
+[Env([0,0.5,0.1,0],[0.1,0.2,1], -0.8),      // logarithmic_n
+ Env([0,0.5,0.1,0],[0.1,0.2,1],  0.0),      // linear
+ Env([0,0.5,0.1,0],[0.1,0.2,1],  0.8)].plot // exponential_n  
+ Env([0,0.5,0.1,0], [0.1,0.2,1], [   2,   0,  -8]), // different for each ramp
+ Env([0,0.5,0.1,0], [0.1,0.2,1], [\lin,\exp,\sqr])  
+\end{lstlisting}
+\end{itemize}
+
+A Break Point Function describes points on a Cartesian plane not ramps.
+
+We must generate the intermediate values ​​between the points through interpolations that transform the BPF into \textit{control signals}.
+
+We can do it with \textit{EnvGen} UGen.
+
+\begin{lstlisting}[frame=single] 
+{EnvGen.kr(                                          // also .ar
+           Env.new([0,0.5,0.1,0],[0.01,0.2,1],\cub), // BPF
+           1,               // gate (1 = noteon, 0 = noteoff)
+           doneAction:2)    // doneAction
+}.scope;
+\end{lstlisting}
+
+One of the arguments common to some UGens is \textit{doneAction:n} which is extremely useful for dynamic voice allocation [\ref{instrumental-model}] and for saving CPU resources.
+
+We can assign this argument a value between 0 and 14 (read \textit{Done} class help file for more).
+
+Each of these represents an automatic action that affects the \textit{Synth} instance containing the UGen in which this argument is specified when it has completed its task (in the case of envelopes at the end of the last ramp).
+
+The most used are:
+\begin{itemize}
+\tightlist
+\item \textit{doneAction: 0}.
+\begin{lstlisting}[frame=single] 
+{SinOsc.ar * Line.ar(0, 1, 1, doneAction:0).scope}.scope
+\end{lstlisting}
+\begin{center}
+\includegraphics[scale=0.55]{done_1.png}
+\end{center}
+
+\item \textit{doneAction: 2}.
+\begin{lstlisting}[frame=single] 
+{SinOsc.ar * Line.ar(0, 1, 1, doneAction:2).scope}.scope
+\end{lstlisting}
+\begin{center}
+\includegraphics[scale=0.55]{done_2.png}
+\end{center}
+\end{itemize}
+\subsection{Triggers, envelope types and durations}\label{triggers-envelope-types-and-durations}
+A \textit{trigger} is the command that starts any action or event such as sending the new frequency of a note, starting a sequence of notes or a sound, sending control parameters to a synth or starting an envelope.
+
+Two trigger types:
+\begin{itemize}
+\tightlist
+\item single trig (bang) \(\rightarrow\)  do it!
+\item switch \(\rightarrow\) two states: 1/on, 0/off.
+\end{itemize}
+
+Let's think about the different interactions with doorbells at home
+
+Two envelope types:
+\begin{itemize}
+\tightlist
+\item without sustain as in percussions or plucked intruments.
+\item with sustain as in organ or electronic keyboards. 
+\end{itemize}
+
+Both types require two triggers (gate 1 - noteon, gate 0 - noteoff).
+
+Trigger types and envelope types are closely connected to each other and to the different types of interaction with the musical instrument we want to design.
+
+\subsubsection{Without sustain}\label{without-sustain}
+Strike the instrument or pluck the string \(\rightarrow\) the sound starts and after a duration end.
+
+In this type we can send a \textit{gate} message preceded by \textit{t\_}.
+
+This produce an automatic \textit{gate 0} message after a time calculated on the specified duration.
+
+\begin{center}
+
+\includegraphics[scale=0.55]{env_nosust.png}
+\end{center}
+
+\begin{lstlisting}[frame=single, caption=Instrument model without sustain] 
+SynthDef(\nosust,  {arg freq=500, amp=0, pan=0, pantime(0.0), 
+                        out=0, t_gate=0, done=2;
+                    var sig, env;
+                        sig = SinOsc.ar(freq);
+                        env = Env.new([0, 1, 0.6, 0.8, 0],
+                                      [0.1, 0.2, 0.4, 1],
+                                      -4);                     
+                        env = EnvGen.kr(env, t_gate, doneAction:done);
+                        sig = sig * env * amp;
+                        sig = Pan2.ar(sig, 0);
+                    Out.ar(0, sig)
+                    }).add;                                                                       
+a = Synth(\nosust, [\done, 0]);        // create the Synth
+a.set(\amp, 0.5, \t_gate,1);           // trig
+a.set(\amp, 0.5, \done, 2, \t_gate,1); // trig and kill
+\end{lstlisting}
+
+In the previous example, the total duration of the sound is specified in absolute values ​​(seconds).
+
+We can calculate it by adding together the delta values ​​of the individual ramps.
+
+\begin{lstlisting}[frame=single] 
+[0.1, 0.2, 0.4, 1].sum;
+\end{lstlisting}
+
+Musically it is complicated to calculate the duration of a sound through this sum.
+
+To work around this, we can:
+\begin{itemize}
+\tightlist
+\item define the ratio between the delta times in a relative/proportional manner.
+\item rescale all values ​​so that the sum is 1.0 by invoking the \textit{.normalizeSum} method.
+\item multiply the desired total duration by the resulting proportional values.
+\end{itemize}
+
+This way we can dynamically stretch the envelope model over time.
+
+\begin{lstlisting}[frame=single, caption=Instrument model without sustain] 
+SynthDef(\nosust,  {arg freq=500, amp=0, dur=1, pan=0, pantime(0.0), 
+                        out=0, t_gate=0, done=2;
+                    var sig, env;
+                        sig = SinOsc.ar(freq);
+                        env = Env.new([0, 1, 0.6, 0.8, 0],
+                                      [10, 20, 40, 100].normalizeSum * dur,
+                                      -4);                     
+                        env = EnvGen.kr(env, t_gate, doneAction:done);
+                        sig = sig * env * amp;
+                        sig = Pan2.ar(sig, 0);
+                    Out.ar(0, sig)
+                    }).add;              
+                                                                             
+a = Synth(\nosust, [\done, 0]);    // Create the Synth
+a.set(\amp, 0.5, \t_gate,1);
+a.free;
+\end{lstlisting}
+
+The \textit{Env} class also accepts some methods dedicated to common non sustained envelope shapes.
+
+\begin{itemize}
+\tightlist
+\item \textit{.linen} \(\rightarrow\) trapezoidal envelope.
+\item \textit{.perc} \(\rightarrow\) percussive envelope.
+\item \textit{.sine} \(\rightarrow\) sinusoidal envelope.
+\item \textit{.triangle} \(\rightarrow\) triangular envelope.
+\end{itemize}
+
+Read the \textit{Env} help file for more.
+
+\subsubsection{With sustain}\label{with-sustain}
+Press a key \(\rightarrow\) the sound starts and continues until we release the key.
+
+In this type we must send a message of \textit{gate:1} (noteon) and then textit{gate:0} (noteoff).
+
+\begin{center}
+\includegraphics[scale=0.55]{env_sust.png}
+\end{center}
+
+\begin{lstlisting}[frame=single, caption=Instrument model with sustain] 
+SynthDef(\sust, {arg freq=500, amp=0, pan=0, pantime(0.0),
+                     out=0, gate=0, done=2;
+                 var sig, env;
+                     sig = SinOsc.ar(freq);
+                     env = Env.adsr;         
+                     env = EnvGen.kr(env, gate, doneAction:done);
+                     sig = sig * env * amp;
+                     sig = Pan2.ar(sig, 0);
+                 Out.ar(0, sig)
+                 }).add;       
+                                                
+a = Synth(\sust, [\done, 0]); 
+a.set(\amp, 0.5, \gate, 1);
+a.set(\gate, 0);
+a.free;
+\end{lstlisting}
+
+There isn't a global duration.
+
+When the sound is triggered and reaches the sustain level it can theoretically go on forever until it receives the \textit{gate 0} message.
+
+We can only define the duration of the attack and release ramps in absolute values.
+
+Some \textit{Env} methods dedicated to common sustained envelope shapes.
+
+\begin{itemize}
+\tightlist
+\item \textit{.asr} \(\rightarrow\) trapezoidal envelope.
+\item \textit{.adsr} \(\rightarrow\) classic envelope.
+\item \textit{.circle} \(\rightarrow\) loop envelope.
+\end{itemize}
+
+There is also a useful UGen that generates a fadein and fadeout: \textit{Linen.kr}.
+
+\begin{lstlisting}[frame=single, caption=Instrument model with Linen.kr] 
+SynthDef(\linen, {arg freq=890, gate=0, a=0.1, r=0.6, amp=0, done=2;
+                  var sig,env;
+                      sig = SinOsc.ar(freq);
+                      env = Linen.kr(gate, a, amp, r, done);
+                      sig = sig * env;
+                  Out.ar(0, sig)
+                  }).add;
+                  
+a = Synth(\linen, [\amp,0.5]);
+a.set(\gate,1); 
+a.set(\gate,0); 
+\end{lstlisting}
+
+\section{Pan}\label{pan}
+
+Float number or control/audio rate signal in range +/- 1.
+
+Almost all UGens output a monophonic signal (one channel).
+
+\begin{lstlisting}[frame=single] 
+s.boot;
+s.meter;
+
+SynthDef(\mono, {arg freq=987, gate=0, amp=0, done=2;
+                  var sig, env;
+                      sig = SinOsc.ar(freq);
+                      env = Linen.kr(gate, doneAction:done);
+                      sig = sig * env * amp;
+                  Out.ar(0, sig)
+                  }).add;
+                  
+a = Synth(\mono, [\amp,0.5]);
+a.set(\gate,1); 
+a.set(\gate,0); 
+\end{lstlisting}
+
+If we duplicate a monophonic signal by writing it on two adjacent channels and broadcast it through two loudspeakers, we obtain a dual-mono signal, not stereo.
+
+\begin{lstlisting}[frame=single] 
+SynthDef(\dual_mono, {arg freq=987, gate=0, amp=0, done=2;
+                      var sig, env;
+                          sig = SinOsc.ar(freq);
+                          env = Linen.kr(gate, doneAction:done);
+                          sig = sig * env * amp;
+                      Out.ar(0, [sig, sig])
+                      }).add;
+                  
+a = Synth(\dual_mono, [\amp,0.5]);
+a.set(\gate,1); 
+a.set(\gate,0); 
+\end{lstlisting}
+
+To obtain a stereo signal we must take a monophonic signal and distribute its amplitude between two adjacent channels so that the sum of the amplitudes output from the two speakers is the same as the original monophonic signal and never exceeds 1.0.
+
+The ratio between the amplitudes output from the speakers defines the position of the source in the stereo front.
+
+\begin{center}
+\includegraphics[scale=0.8]{stereo_0.png}
+\end{center}
+
+\begin{lstlisting}[frame=single] 
+SynthDef(\stereo, {arg pan=0.5;         // 0 = left, 0.5 = center, 1 = right
+                   var sig, sx, dx;
+                       sig = SinOsc.ar;
+                       sx  = 1.0 - pan; // left loudspeaker amplitude
+                       dx  = pan;       // right loudspeaker amplitude
+                       Out.ar(0, [sx, dx] * sig)
+                       }).add;
+
+a = Synth(\stereo);
+a.set(\pan,0);   // left
+a.set(\pan,0.5); // center
+a.set(\pan,1);   // right
+\end{lstlisting}
+
+We define a single value to control panning by automatically calculating the output signal amplitudes.
+
+The perceived intensity of the sound at different positions is not the same.
+
+At the center it is softer than at the sides.
+
+Possible solution \(\rightarrow\) calculate the square root of the amplitude multiplication factor.
+
+The sum of the signals when positioned at the center is greater than 1.0 ($\sqrt{0.5} = 0.707 * 2 = 1.141$) but the perceptual result is correct and there is not harmonic distorsion.
+
+\begin{lstlisting}[frame=single] 
+SynthDef(\stereo, {arg pan=0.5;         // 0 = left, 0.5 = center, 1 = right
+                   var sig, sx, dx;
+                       sig = SinOsc.ar;
+                       sx  = (1.0 - pan).sqrt; // left loudspeaker amplitude
+                       dx  = pan.sqrt;         // right loudspeaker amplitude
+                       Out.ar(0, [sx, dx] * sig)
+                       }).add;
+
+a = Synth(\stereo);
+a.set(\pan,0);   // left
+a.set(\pan,0.5); // center
+a.set(\pan,1);   // right
+\end{lstlisting}
+
+In SuperCollider two dedicated UGens.
+
+\begin{itemize}
+\tightlist
+\item \textit{LinPan2.ar} \(\rightarrow\) linear panning with the softer sound at the center.
+\item \textit{Pan2.ar} \(\rightarrow\) with perceptual correction (equal power).
+\end{itemize}
+
+Both accept the following arguments: mono\_signal, position (-1.0 = left, 0 = center, 1.0 = right), level.
+
+\begin{center}
+\includegraphics[scale=0.8]{stereo_1.png}
+\end{center}
+
+In the previous examples we changed the position instantly.
+
+If we want to create movements within the stereo field we can:
+\begin{itemize}
+\tightlist
+\item convert values ​​(float) into rounded control signals (lag time).
+\begin{lstlisting}[frame=single] 
+SynthDef(\pansmooth, {arg pos=0, ptime=0.5; // target position, lag time
+                      var sig, pan;
+                          sig = SinOsc.ar;
+                          pan = pos.lag(ptime); // logarithmic
+                          sig = Pan2.ar(sig, pan);
+                      Out.ar(0, sig)
+                      }).add;
+                      
+a = Synth(\pan);
+a.set(\pos, rand2(1.0).postln, \ptime, 2);  
+\end{lstlisting}
+
+\item use envelopes.
+\begin{lstlisting}[frame=single] 
+SynthDef(\muovi, {arg t_gate=0, dur=1, amp=0; 
+                  var sig, pos;
+                      sig = SinOsc.ar;
+                      pos = Env.new([-1, 1, 0, 0.5, -0.7, 0], // positions
+                                    [  1, 0.2, 2,   0.3, 1 ].normalizeSum 
+                                                            * dur, 
+                                    0);                            
+                      pos = EnvGen.kr(pos, t_gate);                 
+                      sig = Pan2.ar(sig, pos);
+                      sig = sig * amp;
+                  Out.ar(0, sig)
+                  }).add;
+
+a = Synth(\muovi);
+
+a.set(\dur, 10, \amp, 0.5, \t_gate, 1); 
+\end{lstlisting}
+
+\item use LFO signals.
+\begin{lstlisting}[frame=single] 
+SynthDef(\lfo, {arg rate=0;
+                var sig, lfo;
+                    sig = SinOsc.ar;
+                    lfo = SinOsc.ar(rate/2);   // periodic bipolar signals
+                     //lfo = LFNoise1.ar(rate); // Random
+                     // other...
+                    sig = Pan2.ar(sig, lfo);
+                Out.ar(0, sig)
+                }).add;
+
+a = Synth(\lfo);
+
+a.set(\rate, 2); 
+\end{lstlisting}
+\end{itemize}
+
+\section{Output}\label{output}
+
+Public or private buses.
+
+UGen for output audio signals: \textit{Out.ar}.
+
+Arguments:
+\begin{itemize}
+\tightlist
+\item bus number (0 \(\rightarrow\) leftmost loudspeaker).
+\item signal or array of signals to write on bus.
+\end{itemize}
+
+If the signal in output is more than one channel \(\rightarrow\) the first channel is written to the bus specified as the first argument while the others are sent to nearby buses in ascending order.
+
+\begin{lstlisting}[frame=single] 
+s.scope(3);
+
+SynthDef(\out2,{arg t_gate=0, outBus=0;
+                var siga, sigb, env;
+                    siga = WhiteNoise.ar;
+                    sigb = Saw.ar;
+                    env  = Env.perc;
+                    env  = EnvGen.kr(env,t_gate);
+                    siga = siga * env * 0.2;
+                    sigb = sigb * env * 0.2;
+                Out.ar(outBus, [siga, sigb]) // Array 
+                }).add;
+
+a = Synth(\out2);
+
+a.set(\outBus,0, \t_gate,1);
+a.set(\outBus,1, \t_gate,1);
+\end{lstlisting}
+
+If we change it dynamically \(\rightarrow\) clicks!
+
+We can have more than one \textit{Out} UGen in a \textit{SynthDef} for multiple signal routing.
+
+

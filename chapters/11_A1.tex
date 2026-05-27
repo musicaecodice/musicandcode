@@ -1,0 +1,701 @@
+\chapter{SuperCollider basics}\label{supercollider-basics}
+
+Open Source Software
+
+It uses a programming language (\href{https://learnxinyminutes.com/smalltalk/}{Smalltalk}) that follows the Object Oriented Programming (\href{https://en.wikipedia.org/wiki/Object-oriented_programming}{OOP}) paradigm.
+
+We write the commands as lines of code saved in text files called \textit{scripts}.
+
+\section{User interface}\label{user-interface}
+
+Let's launch the application.
+
+The figure below shows the home screen of the most recent versions (IDE).
+
+Identical on all operating systems.
+
+Divided into four parts:
+
+\begin{center}
+\includegraphics[scale=0.8]{sc_inizio.png}
+\end{center}
+
+\begin{itemize}
+\tightlist
+\item A - Interpreter \(\rightarrow\) the space where the code is written.
+\item B - Help browser \(\rightarrow\) the space where we can consult help files and documentation.
+\item C - Post window \(\rightarrow\) a space where you can read and post various useful information about what's happening in SuperCollider.
+\item D \(\rightarrow\) the space where information about the Interpreter and the Server is displayed.
+\end{itemize}
+
+\section{Architecture}\label{architecture}
+
+Two separate applications that communicate via the \href{https://opensoundcontrol.stanford.edu/}{OSC} protocol.
+
+\begin{itemize}
+\tightlist
+\item Interpreter (or client or sclang).
+    \begin{itemize}
+    \tightlist
+    \item where we write the commands to be executed by the computer in the form of code.
+    \item it work at schedule time.
+    \item if we do not perform any action (such as executing the code) or generate some kind of automation (Routine or interaction) it does not return any value.
+    \end{itemize}
+\item Server (or scsynth).
+    \begin{itemize}
+    \tightlist
+    \item it works behind the scenes, we don't see it.
+    \item it is the SuperCollider sound synthesis engine.
+    \item it receives instructions from the Interpreter and it builds the virtual instruments necessary to generate or process an audio signal.
+    \item it work at a sample rate.
+    \end{itemize}
+\end{itemize}
+
+All audio signals, internal, incoming and outgoing, exist only on the Server.
+
+
+Interpreter \(\rightarrow\) sheet containing:
+\begin{itemize}
+\tightlist
+\item instructions needed to build a virtual musical instrument.
+\item instrumental techniques with which it will be played.
+\item a score indicating the actions to be performed over time to play it.
+\end{itemize}
+
+This sheet is sent via OSC to the Server, which like a virtual luthier/instrumentalist:
+\begin{itemize}
+\tightlist
+\item interprets the assembly instructions.
+\item based on these he builds the virtual instrument and then.
+\item play it by performing actions specified in a score or those sent in real time by a real or virtual performer external to the software.
+\end{itemize}
+
+When we launch the application, two default Servers are automatically created:
+\begin{itemize}
+\tightlist
+\item internal: a server internal to the client application, to be considered a \textit{service}.
+\item localhost: A server independent of the client application, on the same or a different computer. This is the one normally used.
+\end{itemize}
+
+\section{Main commands}\label{main-commands}
+\subsection{New file}\label{new-file}
+
+MAC \(\rightarrow\) cmd + n \\
+WIN \(\rightarrow\) ctrl + n
+
+\subsection{Open file}\label{open-file}
+
+MAC \(\rightarrow\) cmd + o \\
+WIN \(\rightarrow\) ctrl + o
+
+After creating or opening a file, if we want to make SuperCollider perform an action (such as performing a mathematical operation, writing a score, defining a synthesis algorithm, changing the parameters of a Synth, making it play, stopping it, etc.) we must:
+
+\begin{itemize}
+\tightlist
+\item write one or more lines of code in the interpreter containing a sequence of instructions.
+\item select one or more lines of code with the mouse.
+\item run (evaluate) the selected code by pressing cmd + enter or shift + enter.
+\end{itemize}
+
+\subsection{Lines of code}\label{lines-of-code}
+
+Interpreter is divided into lines numbered 1 to n.
+
+Each line should end with a \textit{;} (semicolon).
+
+If we type on multiple lines but don't put a semicolon before the line break SuperCollider interprets them as a single line.
+
+If we write code on the same line after a semicolon SuperCollider interprets it as if it were written one line below.
+
+\begin{lstlisting}[frame=single] 
+1+2;          // this is a line
+(             // but also from here...
+1+
+2/
+3;            // ...to here
+1 + 2; 3 * 7; // these are two lines
+)
+\end{lstlisting}
+
+We can group multiple lines into code blocks by enclosing them in parentheses.
+
+\begin{lstlisting}[frame=single] 
+(
+    
+"ciao".postln;
+a = 12 +24;      // this is a code block
+a.postln;
+    
+)
+\end{lstlisting}
+
+\subsection{Evaluate the code}\label{evaluate-the-code}
+
+Three options:
+\begin{enumerate}
+\tightlist
+\item one line at a time, placing the cursor anywhere on the line we want to execute \(\rightarrow\) cmd + enter.
+\begin{lstlisting}[frame=single] 
+2 + 2;  // see result in the Post window
+\end{lstlisting}
+\item an entire code block by selecting it with the mouse (click and drag) or by double-clicking on the first or last parenthesis.
+\begin{lstlisting}[frame=single] 
+(
+13.postln;
+[12,"ciao", \miao, 45.567].postln;
+(12 + 56).postln
+)
+\end{lstlisting}
+\item the entire code by selecting \textit{Evaluate File} from the \textit{Language} menu.
+\end{enumerate}
+
+\subsection{Execution order}\label{execution-order}
+
+In these last two modes, the operations are performed consecutively:
+
+\begin{itemize}
+\tightlist
+\item from left to right.
+\item line after line.
+\item from top to bottom (in almost all cases).
+\end{itemize}
+
+at the max speed provided by the power of the computer.
+
+\subsection{Error messages}\label{error-messages}
+
+Let's evaluate the following code which intentionally contains an error (the comma before 67 is missing).
+
+\begin{lstlisting}[frame=single] 
+a = [12,34,56 67]
+\end{lstlisting}
+
+Let's read what SuperCollider tells us in the post window: the arrows or the dot indicate where the compilation stopped, so the error will necessarily be earlier and it's up to us to find it.
+
+\subsection{Clear Post window}\label{clear-post-window}
+
+MAC \(\rightarrow\) cmd + shift + p\\
+WIN \(\rightarrow\) ctrl + shift + p
+
+\subsection{Comments}\label{comments}
+
+\begin{itemize}
+\tightlist
+\item to facilitate memory in case we want to modify a patch after some time.
+\item give it to someone who would be helped in understanding the code.
+\end{itemize}
+
+Comments are colored red and there are two possible syntaxes:
+\begin{enumerate}
+\tightlist
+\item on one line.
+\begin{lstlisting}[frame=single] 
+2 + 2; // sum
+\end{lstlisting}
+\item on multiple lines.
+\item on one line.
+\begin{lstlisting}[frame=single] 
+/*
+
+...comment...
+
+*/
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Save file}\label{save-file}
+
+MAC \(\rightarrow\) cmd + s\\
+WIN \(\rightarrow\) alt + s
+
+A pop-up menu opens where we can specify four different formats:
+
+\begin{itemize}
+\tightlist
+\item all Files (filename.txt). Generic format, can be read by any text editor such as TextEdit, Word, LibreOffice, etc.
+\item SuperCollider Document (filename.scd). SuperCollider document format. If SuperCollider isn't already open, double-clicking an .scd file icon will open the software automatically.
+\item SuperCollider Class File (filename.sc). If we want to save a class we wrote.
+\item SuperCollider Help Source (filename.schelp). If you want to save a Help file you've written.
+\end{itemize}
+
+N.B. Please note that in these formats the code written in the interpreter is saved in the form of a text file, not the audio eventually generated by it.
+
+\subsection{Data types}\label{data-types}
+
+As in all formal languages there are several data types that define:
+\begin{itemize}
+\tightlist
+\item amount of memory they occupy.
+\item operations we can perform on them.
+\end{itemize}
+
+The main ones are.
+
+\begin{lstlisting}[frame=single] 
+12             // Int
+12.23          // Float
+\ciao          // Symbol
+'ciao ciao'    // Symbol
+$c             // Char
+"vado al mare" // String
+
+3   +  5;      // # 8
+"3" + "5";     // # 35
+\end{lstlisting}
+
+\section{Audio}\label{audio}
+\subsection{Server boot}\label{server-boot}
+
+If we want to generate or process audio signals, we must first power on the server (boot) and then evaluate the code.
+
+We can compare this action to turning on or off the power supply to an electroacoustic system (player, mixer, amplifier, and speakers).
+
+There are three ways to do this:
+\begin{enumerate}
+\tightlist
+\item from the user interface:
+      \begin{itemize}
+      \tightlist
+      \item Boot (power on) \(\rightarrow\) click \textit{0.00\%} to the right of \textit{Server} \(\rightarrow\) select \textit{Boot Server}. The numbers turn green, and some begin to change.
+      \item Quit (power off) \(\rightarrow\) select \textit{Quit Server}. The numbers turn blank and reset.
+      \end{itemize}
+\item by writing and evaluating commands with lines of code:
+\begin{lstlisting}[frame=single] 
+s.boot; // Power on
+s.quit; // Power off
+\end{lstlisting}
+\item using keyboard shortcuts:
+\begin{itemize}
+      \tightlist
+      \item Boot: MAC \(\rightarrow\) cmd + b, WIN \(\rightarrow\) ctrl + b.
+      \item Quit: Only from the user interface or code.
+      \end{itemize}
+\end{enumerate}
+
+When we \textit{Boot} the Server we turn on the audio computation in SuperCollider but if we don’t send any signal to the output we won’t hear any sound.
+
+\begin{lstlisting}[frame=single] 
+(
+b = {PMOsc.ar(440, MouseY.kr(1, 550), MouseX.kr(1, 15))*Line.kr(0,0.3,1)};
+b.play;
+b.plot(0.5);
+b.scope;
+b.freqscope;
+)
+\end{lstlisting}
+
+\subsection{Stopping ongoing processes including audio}\label{stopping-ongoing-processes-including-audio}
+
+MAC \(\rightarrow\) cmd + .\\
+WIN \(\rightarrow\) alt + .
+
+When we run the code and stop it as we saw it is as if we pressed the \textit{Play} and \textit{Stop} buttons on a audio player or other sound generator connected to the electroacoustic system mentioned above.
+
+\subsection{Boot info}\label{boot-info}
+When we boot, the Server connects to the audio drivers currently being used by the computer's operating system.
+
+If we want to use an external sound card \(\rightarrow\) select it from the system preferences as with all other software.
+
+When we boot the Server some useful information appears in the Post window:
+\begin{itemize}
+      \tightlist
+      \item the name and IP address that identifies the server we're running. Using this address, we can send messages to that specific server and not to any others.
+      \item the number and names of the devices (both real and virtual) that we have available to make the Server communicate with the outside world.
+      \item the device (among those in the previous list) connected to the Server and how many audio channels it supports for both input and output signals.
+      \item the sample rate and block size that the server in question is working at.
+      \item some control messages indicating the status of communications between Server and Client.
+\end{itemize}
+
+\subsection{Global variables, classes and messages}\label{global-variables-classes-and messages}
+
+There are two default Servers \(\rightarrow\) \textit{local} and \textit{internal}.
+
+The first is the default Server.
+
+The second is mainly for debugging (obsolete). 
+
+We can choose which one to use.
+
+\begin{lstlisting}[frame=single] 
+s = Server.local;
+\end{lstlisting}
+
+\begin{itemize}
+      \tightlist
+      \item \textit{s} \(\rightarrow\) variable.
+      \item \textit{Server} \(\rightarrow\) Class.
+      \item \textit{.local} \(\rightarrow\) message.
+\end{itemize}
+
+\subsubsection{Variable}\label{variable}
+
+A portion of computer memory designated to hold data (numbers, characters, audio files, synthesizers, tables, arrays, etc.), which can be modified during the execution of a program.
+
+To distinguish a single portion of memory from many others we must mark it with a \textit{name} (or label, or address).
+
+The line of code in the previous names a portion of memory \textit{s} and assigns it to the local Server.
+
+In SuperCollider three types of variables:
+\begin{itemize}
+      \tightlist
+      \item global \(\rightarrow\) only lowercase letters.
+      \begin{itemize}
+      \tightlist
+      \item generally declared at the beginning of the file.
+      \item we can refer to them in any part of code.
+      \end{itemize}
+      \item environment \(\rightarrow\) a letter or word preceded by the tilde symbol (\textasciitilde).
+      \begin{itemize}
+      \tightlist
+      \item the entire script is considered a programming environment.
+      \item they are valid within this entire environment (currentEnvironment).
+      \item they are we can use them as global variables with word names.
+      \end{itemize}
+      \item local \(\rightarrow\) preceded by the keyword \textit{var} and included in bracket structures (round or curly).
+      \begin{itemize}
+      \tightlist
+      \item its syntactic structure end with \textit{;}
+      \item the assigned value is valid only within the parentheses (scope of the variable).
+      \end{itemize}
+\end{itemize}
+
+\subsubsection{Class}\label{class}
+A model through which we can construct many copies of an object (\textit{instances}).
+
+Classes begin with a capital letter.
+
+\subsubsection{Message}\label{message}
+
+Messages can be sent to objects (classes, instances, numbers or any data type). 
+
+Messages have two functions:
+\begin{itemize}
+\tightlist
+\item define the characteristics of an object.
+\item ask the object to perform an action.
+\end{itemize}
+
+We can send messages to objects separating them by a period.
+
+In the previous code we:
+\begin{itemize}
+\tightlist
+\item define the \textit{Server} as local by sending the \textit{.local} message 
+\item assign a copy (instance) of it to the variable \textit{s}.
+\end{itemize}
+
+This is one of the SuperCollider most common syntactic structures.
+
+\begin{lstlisting}[frame=single] 
+// variable_name  assignment   Object.messagge
+   s                  =        Server.local;
+    
+   s.boot;    // send a new message to Server.local
+   s.quit;
+   s.reboot;
+\end{lstlisting}
+
+Through these syntactic structures the code is more readable and less redundant.
+
+\subsection{Server settings}\label{server-settings}
+
+Main messages.
+\begin{lstlisting}[frame=single] 
+s = Server.local;    // or .internal
+s.boot;              
+s.quit;              
+s.reboot;            // quit and reboot
+s.waitForBoot({...}) // boot the Server and value the function after booting
+s.freeAll;           // clear the Server
+s.volume = 0;        // set il volume in uscita (in dB)
+s.mute;              // mute audio output
+s.unmute;            // unmute
+s.record;            // record outputs.
+\end{lstlisting}
+
+By default SuperCollider receives and sends all audio signals to the audio drivers selected in the operating system.
+
+We can override this setting from code using \textit{ServerOptions} class.
+
+Get a list of devices connected to the computer.
+\begin{lstlisting}[frame=single] 
+ServerOptions.devices;
+ServerOptions.inDevices;
+ServerOptions.outDevices;
+\end{lstlisting}
+
+Select the one to use.
+\begin{lstlisting}[frame=single] 
+s = Server.local;
+
+s.options.device;                       // which audio dirver is selected
+s.options.device_("Soundflower (2ch)"); // set audio driver (in and out)
+s.reboot;                               // if booted we must quit and reboot
+
+s.options.device = nil;                 // 'nil' = system audio driver
+s.reboot;
+\end{lstlisting}
+
+Different devices for input and output signals.
+\begin{lstlisting}[frame=single] 
+s.options.inDevice  = "Built-in Microph";
+s.options.outDevice = "Soundflower (2ch)";
+s.reboot;
+\end{lstlisting}
+
+Change the number of channels.
+\begin{lstlisting}[frame=single] 
+s.options.numOutputBusChannels.postln; // get 
+s.options.numOutputBusChannels_(8);    // set 
+
+s.options.numInputBusChannels.postln;  // get 
+s.options.numInputBusChannels_(8);     // set 
+
+s.reboot;
+\end{lstlisting}
+
+Change sampling rate and block size.
+
+Change the number of channels.
+\begin{lstlisting}[frame=single] 
+s.options.sampleRate;         
+s.options.sampleRate_(44100);
+
+s.options.blockSize;          
+s.options.blockSize_(64);     
+
+s.reboot;
+\end{lstlisting}
+
+\section{UGens}\label{ugens}
+
+UGens (Unit Generators) are special classes optimized for generating or modifying audio signals.
+
+UGens \textit{live} in the Server.
+
+They can only receive three messsages that define their rate (how many values they must generate or modify over time).
+
+\begin{itemize}
+\tightlist
+\item UGen.ar (audio rate) \(\rightarrow\) generates or modifies as many values as the sample rate.
+\item UGen.kr (control rate) \(\rightarrow\) generates or modifies one sample value for every sixty-four sample values made by an audio rate UGen.
+\item UGen.ir (initialization rate) \(\rightarrow\) generates or modifies only one value at the time it is created.
+\end{itemize}
+
+See the difference.
+\begin{lstlisting}[frame=single] 
+{[SinOsc.ar,SinOsc.kr]}.plot(1/50, bounds:1000@500);
+\end{lstlisting}
+
+Audio rate signals \(\rightarrow\) can be connected to both public inputs (ADC) or public outputs (DAC) and used as parameter control signals of other UGens  
+
+Control rate signals \(\rightarrow\) can be connected only to private inputs and outputs for internal routing.
+
+While the previous messages define how many values are generated over time the UGen specification name indicate what kind of relationship exist between the generated values (\textit{waveform}).
+
+We can get a list of all UGens by going to the Help files window and clicking first on Browse and then on UGens.
+
+\begin{center}
+\includegraphics[scale=0.85]{broswe.png}
+\end{center}
+
+All messages that can be invoked on UGens have \textit{arguments} that specify the values of certain parameters of the signal to be generated or modified such as frequency, amplitude or other.
+
+Arguments are specified within round brackets and are different for each message.
+
+To find out the arguments of a message to a specific UGen we need to read its Help file.
+
+For example, let's look at \textit{SinOsc} class which is a sinusoidal oscillator.
+
+\begin{center}
+\includegraphics[scale=0.7]{args.png}
+\end{center}
+
+The first specifies the frequency in Hertz.
+\begin{lstlisting}[frame=single] 
+{
+[SinOsc.ar(1320),
+ SinOsc.ar(880),
+ SinOsc.ar(440)]
+}.plot(minval:-1,maxval:1)
+\end{lstlisting}
+\begin{center}
+\includegraphics[scale=0.5]{freq.png}
+\end{center}
+
+The second specifies the initial phase in radians between -1 and 1.
+\begin{lstlisting}[frame=single] 
+{
+[SinOsc.ar(440, 0.0),
+ SinOsc.ar(440, 0.5),
+ SinOsc.ar(440, 1.0)]
+}.plot(minval:-1,maxval:1)
+\end{lstlisting}
+\begin{center}
+\includegraphics[scale=0.5]{phas.png}
+\end{center}
+
+The third specifies a multiplication factor for the output values.
+\begin{lstlisting}[frame=single] 
+{
+[SinOsc.ar(440, 0.0, 1.0),
+ SinOsc.ar(440, 0.0, 0.5),
+ SinOsc.ar(440, 0.0, 0.2)]
+}.plot(minval:-1,maxval:1)
+\end{lstlisting}
+\begin{center}
+\includegraphics[scale=0.5]{mul.png}
+\end{center}
+
+The fourth specifies a value to add to the output values.
+\begin{lstlisting}[frame=single] 
+{
+[SinOsc.ar(440, 0.0, 0.5, 0.5),
+ SinOsc.ar(440, 0.0, 0.5, 0.3),
+ SinOsc.ar(440, 0.0, 0.2,-0.5)]
+}.plot(minval:-1,maxval:1)
+\end{lstlisting}
+
+\begin{center}
+\includegraphics[scale=0.5]{add.png}
+\end{center}
+
+These last two arguments (\textit{mul} and \textit{add}) are included in almost all UGens and are commonly used to rescale the signal output range.
+
+It is not necessary to specify all arguments.
+
+Any arguments not specified will take the default value found in the help file.
+
+Two different syntaxes.
+
+\begin{lstlisting}[frame=single] 
+SinOsc.ar(440,0,0.3);         // we must specify args from left to right
+SinOsc.ar(mul:0.7, freq:500); // keyword
+\end{lstlisting}
+
+\section{Monitors}\label{monitors}
+
+Three types:
+
+\begin{itemize}
+\tightlist
+\item auditory \(\rightarrow\) we get information about the code by listening to the sound output.
+\item graphic \(\rightarrow\) we display the waveform (oscillogram), spectrum (spectrogram) or intensity (meters) od the signal.
+\item numeric \(\rightarrow\) we display the values of individual samples or rather samples extracted from the numerical stream at defined times (subsampling).
+\end{itemize}
+
+In SuperCollider we can monitor:
+\begin{itemize}
+\tightlist
+\item computational activity.
+\item audio and control signals.
+      \begin{itemize}
+      \tightlist
+      \item Server input and output public buses.
+      \item UGens input and output buses.
+      \end{itemize}
+\end{itemize}
+
+\subsection{Computational activity}\label{computational-activity}
+
+Two numeric monitor types:
+
+\begin{enumerate}
+\tightlist
+\item read the information on the IDE (bottom right).
+      \begin{itemize}
+      \tightlist
+      \item 0.02\%: Average CPU usage.
+      \item 0.06\%: Peak CPU usage.
+      \item 0u: number of active UGens in the Server.
+      \item 0s: Number of active Synths in the Server.
+      \item 2g: number of active Groups in the server.
+      \item 94d: number of active SynthDefs in the Server.
+      \item 0.0dB: Server Master Gain.
+      \item M: mute.
+      \item R: record.
+      \end{itemize}
+      \begin{center}
+      \includegraphics[scale=0.8]{monitor_1.png}
+      \end{center}
+      By clicking on the numbers a window appears and we can activate or deactivate various commands.
+
+\item get values sending messages to the Server.
+      \begin{lstlisting}[frame=single] 
+s.status;       // actual Server
+s.avgCPU;       // CPU average
+s.peakCPU;      // CPU peak
+s.numUGens;     // number of UGens
+s.numSynths;    // number of Synths
+s.numGroups;    // number of Groups
+s.numSynthDefs; // number of SynthDefs
+s.volume;       // output gain (dB)
+s.mute;         
+s.unmute;     
+s.record;
+      \end{lstlisting}
+      By getting the values from the code we can assign them to variables and use them within the script.
+\end{enumerate}
+
+\subsection{Audio and control signals}\label{audio-and-control-signals}
+\subsubsection{Server inputs and outputs}\label{server-inputs-and-outputs}
+Three graphical interfaces:
+\begin{lstlisting}[frame=single] 
+s.meter;     // (PPM) monitoring signals amplitude
+s.scope;     // (oscilloscope) monitoring waveforms
+s.freqscope; // (spectroscope) monitoring spectra
+\end{lstlisting}
+
+\subsubsection{UGens inputs and outputs}\label{ugens-inputs-and-outputs}
+
+\begin{itemize}
+\tightlist
+\item auditory \(\rightarrow\) we can quickly hear the output signals from a UGen with the following syntax.
+\begin{lstlisting}[frame=single] 
+{SinOsc.ar}.play;
+{SinOsc.ar + WhiteNoise.ar}.play;
+\end{lstlisting}
+\item graphic \(\rightarrow\) we can change the \textit{.play} message with \textit{.scope} message.
+\begin{lstlisting}[frame=single] 
+{Saw.ar}.scope;
+{SinOsc.ar(LFNoise0.kr(15,1000,2000))}.scope;
+\end{lstlisting}
+
+We can change the \textit{.play} message with \textit{.plot} message.
+
+A lot of arguments, read the Help file.
+\begin{lstlisting}[frame=single] 
+{Pulse.ar}.plot;
+{Pulse.ar + Saw.ar}.plot(duration: 0.01 ); // window duration in seconds
+{Pulse.ar + WhiteNoise.kr}.plot(minval: -2, maxval: 2); // y axis
+\end{lstlisting}
+
+\item numeric \(\rightarrow\) we can use the \textit{.poll} message directly on UGen.
+
+Argument is how many values show in one second (Hz).
+\begin{lstlisting}[frame=single] 
+SinOsc.ar.poll(1)}.play;
+{SinOsc.ar(MouseX.kr(40,10000,1).poll(10), 0, 0.1) }.play;
+\end{lstlisting}
+\end{itemize}
+
+\section{Help files}\label{help-files}
+Mainly divided into three sections:
+
+\begin{enumerate}
+\tightlist
+\item contains general information about the object and suggestions on similar objects.
+\item contains information about the messages (methods) we can invoke on the object and their arguments. They are divided into class methods and instance methods.
+\item contains examples of using the UGen that can be evaluated directly on site.
+\end{enumerate}
+
+\section{Web resources}\label{web-resources}
+
+\begin{itemize}
+\tightlist
+\item B.Ruviaro - \href{https://ccrma.stanford.edu/~ruviaro/texts/A_Gentle_Introduction_To_SuperCollider.pdf}{A Gentle Introduction to SuperCollider}.
+\item E.Fieldsteel - \href{https://www.youtube.com/playlist?list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC}{You Tube Tutorials}.
+\item VV.AA. - \href{https://sccode.org/}{sc-code}.
+\item VV.AA. - \href{https://sctweets.tumblr.com/}{sc-tweets}.
+\item T.Magnusson - \href{https://thormagnusson.gitbooks.io/scoring/content/}{Scoring aound}
+\end{itemize}
